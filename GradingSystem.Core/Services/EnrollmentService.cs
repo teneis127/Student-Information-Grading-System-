@@ -20,23 +20,44 @@ public class EnrollmentService
     /// <summary>Ghi danh sinh viên vào môn trong một học kỳ.</summary>
     public Enrollment Enroll(Student student, Course course, Term term)
     {
-        // TODO 1: chạy từng rule trong _enrollmentRules (rule vi phạm sẽ ném EnrollmentException)
-        // TODO 2: nếu qua hết thì tạo Enrollment, student.AddEnrollment, rồi trả về
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(student);
+        ArgumentNullException.ThrowIfNull(course);
+        ArgumentNullException.ThrowIfNull(term);
+
+        foreach (IEnrollmentRule rule in _enrollmentRules)
+            rule.Validate(student, course, term);
+
+        var enrollment = new Enrollment(course, term);
+        student.AddEnrollment(enrollment);
+        return enrollment;
     }
 
     /// <summary>Hủy một môn. Chỉ hủy được khi chưa chốt đăng ký.</summary>
     public void Drop(Student student, Course course, Term term)
     {
-        // TODO: tìm lượt ghi danh, nếu đã Confirmed thì ném EnrollmentException, không thì xóa
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(student);
+        ArgumentNullException.ThrowIfNull(course);
+        ArgumentNullException.ThrowIfNull(term);
+
+        Enrollment enrollment = student.GetEnrollments(term).FirstOrDefault(e => e.Course == course)
+            ?? throw new EnrollmentException($"Sinh viên chưa ghi danh môn {course.Code} trong kỳ {term}.");
+
+        if (enrollment.Status == EnrollmentStatus.Confirmed)
+            throw new EnrollmentException($"Đã chốt đăng ký kỳ {term}, không thể hủy môn {course.Code}.");
+
+        student.RemoveEnrollment(enrollment);
     }
 
     /// <summary>Chốt đăng ký của cả kỳ.</summary>
     public void SubmitRegistration(Student student, Term term)
     {
-        // TODO 1: chạy từng rule trong _registrationRules
-        // TODO 2: nếu qua hết thì gọi Confirm() cho mọi lượt ghi danh của kỳ đó
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(student);
+        ArgumentNullException.ThrowIfNull(term);
+
+        foreach (IRegistrationRule rule in _registrationRules)
+            rule.Validate(student, term);
+
+        foreach (Enrollment enrollment in student.GetEnrollments(term).ToList())
+            enrollment.Confirm();
     }
 }

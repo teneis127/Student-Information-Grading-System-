@@ -18,22 +18,55 @@ public class Course
 
     public Course(string code, string name, int credits, IGradingScheme scheme, Instructor? instructor = null)
     {
-        // TODO: code và name không được rỗng (ArgumentException)
-        // TODO: credits phải > 0 (ArgumentOutOfRangeException)
-        // TODO: scheme không được null (ArgumentNullException)
-        // TODO: gán giá trị vào các thuộc tính
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(code))
+            throw new ArgumentException("Mã môn học không được rỗng.", nameof(code));
+
+        if(string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Tên môn học không được rỗng.", nameof(code));
+
+        if (credits <= 0)
+            throw new ArgumentOutOfRangeException(nameof(credits), "Số tín chỉ phải lớn hơn 0.");
+        
+        ArgumentNullException.ThrowIfNull(scheme);
+
+        Code = code;
+        Name = name;
+        Credits = credits;
+        Scheme = scheme;
+        Instructor = instructor;
+    }
+
+    private static bool CanReach(Course from, Course target, HashSet<Course> visited)
+    {
+        if (ReferenceEquals(from, target))
+            return true;
+        
+
+        if (!visited.Add(from))
+            return false;
+
+        foreach (Course next in from._prerequisites)
+        {
+            if (CanReach(next, target, visited))
+                return true;
+        }
+
+        return false;
     }
 
     /// <summary>Thêm một môn tiên quyết cho môn này.</summary>
     public void AddPrerequisite(Course prerequisite)
     {
-        // TODO 1: prerequisite không được null
-        // TODO 2: không cho môn tự làm tiên quyết của chính nó
-        // TODO 3: không cho thêm trùng
-        // TODO 4: dùng DFS kiểm tra chu trình: từ 'prerequisite' đi theo các Prerequisites,
-        //         nếu đến được 'this' thì ném InvalidOperationException
-        // TODO 5: nếu hợp lệ thì thêm vào _prerequisites
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(prerequisite);
+
+        if (ReferenceEquals(prerequisite, this))
+            throw new InvalidOperationException("Một môn học không thể là tiên quyết của chính nó.");
+
+        if (_prerequisites.Contains(prerequisite))
+            throw new InvalidOperationException($"Môn {prerequisite.Code} đã là tiên quyết của {Code}.");
+        
+        if (CanReach(prerequisite, this, new HashSet<Course>()))
+            throw new InvalidOperationException($"Thêm {prerequisite.Code} làm tiên quyết của {Code} sẽ tạo chu trình. ");
+        _prerequisites.Add(prerequisite);
     }
 }

@@ -8,9 +8,13 @@ public class Instructor
 
     public Instructor(string id, string name)
     {
-        // TODO 1: id không được rỗng (string.IsNullOrWhiteSpace), nếu rỗng ném ArgumentException
-        // TODO 2: name không được rỗng, nếu rỗng ném ArgumentException
-        // TODO 3: gán giá trị vào Id và Name
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("Id không được rỗng.", nameof(id));
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Tên không được rỗng.", nameof(name));
+
+        Id = id;
+        Name = name;
     }
 }

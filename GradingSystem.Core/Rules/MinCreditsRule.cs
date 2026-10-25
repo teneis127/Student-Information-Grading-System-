@@ -9,14 +9,18 @@ public class MinCreditsRule : IRegistrationRule
 
     public MinCreditsRule(int minCredits)
     {
-        // TODO: minCredits phải > 0
+        if (minCredits <= 0)
+            throw new ArgumentOutOfRangeException(nameof(minCredits), "Mức tối thiểu phải lớn hơn 0.");
+
         _minCredits = minCredits;
     }
 
     public void Validate(Student student, Term term)
     {
-        // TODO: nếu student.GetRegisteredCredits(term) < _minCredits thì ném EnrollmentException
-        //       (bằng đúng mức tối thiểu vẫn hợp lệ)
-        throw new NotImplementedException();
+       int total = student.GetRegisteredCredits(term);
+
+        if (total < _minCredits)
+            throw new EnrollmentException(
+                $"Chưa đủ tối thiểu {_minCredits} tín chỉ trong kỳ {term}: hiện có {total} tín chỉ.");
     }
 }

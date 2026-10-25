@@ -9,14 +9,18 @@ public class MaxCreditsRule : IEnrollmentRule
 
     public MaxCreditsRule(int maxCredits)
     {
-        // TODO: maxCredits phải > 0
+         if (maxCredits <= 0)
+            throw new ArgumentOutOfRangeException(nameof(maxCredits), "Mức tối đa phải lớn hơn 0.");
+
         _maxCredits = maxCredits;
     }
 
     public void Validate(Student student, Course course, Term term)
     {
-        // TODO: tổng = student.GetRegisteredCredits(term) + course.Credits
-        //       nếu tổng > _maxCredits thì ném EnrollmentException (bằng đúng mức tối đa vẫn hợp lệ)
-        throw new NotImplementedException();
+       int total = student.GetRegisteredCredits(term) + course.Credits;
+
+        if (total > _maxCredits)
+            throw new EnrollmentException(
+                $"Vượt tối đa {_maxCredits} tín chỉ trong kỳ {term}: sẽ là {total} tín chỉ.");
     }
 }

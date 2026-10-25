@@ -11,41 +11,42 @@ public class Student
 
     public Student(string id, string name)
     {
-        // TODO: id và name không được rỗng (ArgumentException)
-        // TODO: gán giá trị
-        throw new NotImplementedException();
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("Id không được rỗng.", nameof(id));
+
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Tên không được rỗng.", nameof(name));
+
+        Id = id;
+        Name = name;
     }
 
     public void AddEnrollment(Enrollment enrollment)
     {
-        // TODO: enrollment không được null, rồi thêm vào _enrollments
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(enrollment);
+        _enrollments.Add(enrollment);
     }
 
     public void RemoveEnrollment(Enrollment enrollment)
     {
-        // TODO: xóa khỏi _enrollments
-        throw new NotImplementedException();
+         _enrollments.Remove(enrollment);
     }
 
     /// <summary>Các lượt ghi danh của sinh viên trong một học kỳ.</summary>
     public IEnumerable<Enrollment> GetEnrollments(Term term)
     {
-        // TODO: lọc _enrollments theo term (Term là record nên so sánh bằng == được)
-        throw new NotImplementedException();
+        return _enrollments.Where(e => e.Term == term);
     }
 
     /// <summary>Tổng tín chỉ đang đăng ký trong một học kỳ.</summary>
     public int GetRegisteredCredits(Term term)
     {
-        // TODO: cộng Course.Credits của các lượt ghi danh trong term
-        throw new NotImplementedException();
+       return GetEnrollments(term).Sum(e => e.Course.Credits);
     }
 
     /// <summary>Sinh viên đã qua môn này chưa?</summary>
     public bool HasPassed(Course course)
     {
-        // TODO: có lượt ghi danh nào của course mà IsPassed() là true không?
-        throw new NotImplementedException();
+       return _enrollments.Any(e => e.Course == course && e.IsPassed());
     }
 }

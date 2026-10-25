@@ -7,7 +7,8 @@ public class AlreadyPassedRule : IEnrollmentRule
 {
     public void Validate(Student student, Course course, Term term)
     {
-        // TODO: nếu student.HasPassed(course) thì ném EnrollmentException kèm lý do
-        throw new NotImplementedException();
+        if (student.HasPassed(course))
+            throw new EnrollmentException(
+                $"Sinh viên {student.Name} đã qua môn {course.Code}, không thể ghi danh lại.");
     }
 }

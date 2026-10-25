@@ -7,8 +7,12 @@ public class PrerequisiteRule : IEnrollmentRule
 {
     public void Validate(Student student, Course course, Term term)
     {
-        // TODO: duyệt course.Prerequisites, môn nào student chưa qua (HasPassed)
-        //       thì ném EnrollmentException, nêu rõ tên môn còn thiếu
-        throw new NotImplementedException();
+        var missing = course.Prerequisites
+            .Where(p => !student.HasPassed(p))
+            .ToList();
+
+        if (missing.Count > 0)
+            throw new EnrollmentException(
+                $"Chưa qua môn tiên quyết: {string.Join(", ", missing.Select(p => p.Code))}.");
     }
 }

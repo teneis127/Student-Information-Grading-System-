@@ -11,15 +11,18 @@ public record Term
 
     public Term(int year, int number)
     {
-        // TODO 1: year phải > 0, nếu không ném ArgumentOutOfRangeException
-        // TODO 2: number chỉ được là 1 hoặc 2, nếu không ném ArgumentOutOfRangeException
-        // TODO 3: gán giá trị vào Year và Number
-        throw new NotImplementedException();
+        if (year <= 0)
+            throw new ArgumentOutOfRangeException(nameof(year), "Năm phải lớn hơn 0.");
+
+        if (number < 1 || number > 2)
+            throw new ArgumentOutOfRangeException(nameof(number), "Kỳ phải là 1 hoặc 2.");
+
+        Year = year;
+        Number = number;
     }
 
     public override string ToString()
     {
-        // TODO: trả về dạng "năm-kỳ", ví dụ "2026-1" (dùng chuỗi $"...")
-        throw new NotImplementedException();
+         return $"{Year}-{Number}";
     }
 }
