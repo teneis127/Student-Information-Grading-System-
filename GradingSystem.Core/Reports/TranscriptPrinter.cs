@@ -1,5 +1,7 @@
 using GradingSystem.Core.Models;
 using GradingSystem.Core.Services;
+using System.Globalization;
+using System.Text;
 
 namespace GradingSystem.Core.Reports;
 
@@ -11,21 +13,70 @@ public class TranscriptPrinter
 
     public TranscriptPrinter(GpaCalculator gpaCalculator, AcademicRankClassifier rankClassifier)
     {
-        // TODO: kiểm tra hai tham số không null rồi gán vào hai biến trên
-        throw new NotImplementedException();
+        ArgumentNullException.ThrowIfNull(gpaCalculator);
+        ArgumentNullException.ThrowIfNull(rankClassifier);
+
+        _gpaCalculator = gpaCalculator;
+        _rankClassifier = rankClassifier;
     }
 
     /// <summary>Tạo bảng điểm của một sinh viên dưới dạng chuỗi nhiều dòng.</summary>
     public string Print(Student student)
     {
-        // TODO 1: student không được null
-        // TODO 2: in tiêu đề, tên và mã sinh viên
-        // TODO 3: nhóm các lượt ghi danh theo học kỳ, sắp xếp học kỳ tăng dần (Year rồi Number)
-        // TODO 4: mỗi môn in: mã môn, tên môn, số tín chỉ, điểm hệ 10, kết quả (Evaluate), điểm hệ 4
-        //         chưa có điểm thì in "chưa có điểm"; môn Pass/Fail không có điểm hệ 4 thì in "-"
-        // TODO 5: in GPA tích lũy (nhờ GpaCalculator) và xếp loại học lực (nhờ AcademicRankClassifier)
-        //         nếu GPA là null thì in "chưa có GPA" và không xếp loại
-        // Gợi ý: dùng StringBuilder và AppendLine; PadRight để canh cột
-        throw new NotImplementedException();
+         ArgumentNullException.ThrowIfNull(student);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("BẢNG ĐIỂM");
+        sb.AppendLine($"Sinh viên: {student.Name} ({student.Id})");
+
+        // Nhóm theo học kỳ, học kỳ cũ in trước (sắp theo năm rồi đến kỳ).
+        var terms = student.Enrollments
+            .GroupBy(e => e.Term)
+            .OrderBy(group => group.Key.Year)
+            .ThenBy(group => group.Key.Number);
+
+        foreach (var termGroup in terms)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"Học kỳ {termGroup.Key}");
+
+            foreach (Enrollment enrollment in termGroup.OrderBy(e => e.Course.Code))
+                sb.AppendLine(FormatRow(enrollment));
+        }
+
+        sb.AppendLine();
+
+        double? gpa = _gpaCalculator.Compute(student);
+        if (gpa.HasValue)
+        {
+            sb.AppendLine($"GPA tích lũy: {FormatNumber(gpa.Value, 2)}");
+            sb.AppendLine($"Xếp loại: {_rankClassifier.Classify(gpa.Value)}");
+        }
+        else
+        {
+            sb.AppendLine("GPA tích lũy: chưa có GPA");
+        }
+
+        return sb.ToString();
     }
+
+    private static string FormatRow(Enrollment enrollment)
+    {
+        string score = enrollment.Score.HasValue
+            ? FormatNumber(enrollment.Score.Value, 1)
+            : "chưa có điểm";
+
+        string result = enrollment.Score.HasValue
+            ? enrollment.Course.Scheme.Evaluate(enrollment.Score.Value)
+            : "-";
+
+        double? points = enrollment.GetGradePoints();
+        string pointsText = points.HasValue ? FormatNumber(points.Value, 1) : "-";
+
+        return $"  {enrollment.Course.Code,-8}{enrollment.Course.Name,-20}{enrollment.Course.Credits,2} TC  {score,-14}{result,-6}{pointsText}";
+    }
+
+    // Luôn dùng dấu chấm thập phân (3.70), không phụ thuộc cài đặt ngôn ngữ của máy (máy tiếng Việt dùng dấu phẩy).
+    private static string FormatNumber(double value, int decimals)
+        => value.ToString("F" + decimals, CultureInfo.InvariantCulture);
 }

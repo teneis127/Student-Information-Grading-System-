@@ -11,15 +11,33 @@ public class GpaCalculator
     /// </summary>
     public double? Compute(Student student)
     {
-        // TODO 1: student không được null (ArgumentNullException)
-        // TODO 2: chỉ lấy các lượt ghi danh ĐÃ CÓ ĐIỂM (Score có giá trị)
-        // TODO 3: chỉ lấy môn mà Course.Scheme.CountsTowardGpa là true (môn Pass/Fail bị loại)
-        // TODO 4: môn học lại thì chỉ tính LẦN HỌC GẦN NHẤT của môn đó
-        //         (gợi ý: GroupBy theo Course, rồi OrderBy Term.Year, ThenBy Term.Number, lấy phần tử cuối)
-        // TODO 5: GPA = tổng(điểm hệ 4 x số tín chỉ) / tổng số tín chỉ
-        //         (điểm hệ 4 lấy từ Enrollment.GetGradePoints(); môn rớt D, F vẫn được tính)
-        // TODO 6: không có môn nào đủ điều kiện thì trả về null
-        // TODO 7: làm tròn 2 chữ số thập phân (MidpointRounding.AwayFromZero)
-        throw new NotImplementedException();
+         ArgumentNullException.ThrowIfNull(student);
+
+        // Bước 1: chọn các lượt học được tính.
+        //  - Thang điểm của môn có tính vào GPA (môn Pass/Fail bị loại).
+        //  - Đã có điểm (GetGradePoints trả null nếu chưa có điểm).
+        // Bước 2: mỗi môn chỉ giữ LẦN HỌC GẦN NHẤT (xét theo năm rồi đến kỳ, không theo thứ tự thêm vào).
+        var counted = student.Enrollments
+            .Where(e => e.Course.Scheme.CountsTowardGpa && e.GetGradePoints().HasValue)
+            .GroupBy(e => e.Course)
+            .Select(group => group.OrderBy(e => e.Term.Year).ThenBy(e => e.Term.Number).Last())
+            .ToList();
+
+        // Dùng decimal để cộng và chia chính xác, tránh sai số của số nhị phân.
+        decimal totalPoints = 0;
+        int totalCredits = 0;
+
+        foreach (Enrollment enrollment in counted)
+        {
+            decimal points = (decimal)enrollment.GetGradePoints()!.Value;
+            totalPoints += points * enrollment.Course.Credits;
+            totalCredits += enrollment.Course.Credits;
+        }
+
+        if (totalCredits == 0)
+            return null;
+
+        decimal gpa = totalPoints / totalCredits;
+        return (double)Math.Round(gpa, 2, MidpointRounding.AwayFromZero);
     }
 }
